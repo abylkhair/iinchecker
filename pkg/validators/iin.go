@@ -14,25 +14,22 @@ var (
 )
 
 type IINValidator struct {
-	iin string
 }
 
-func NewIINValidator(iin string) *IINValidator {
-	return &IINValidator{
-		iin: iin,
-	}
+func NewIINValidator() *IINValidator {
+	return &IINValidator{}
 }
 
-func (c *IINValidator) IsValid() (isValid bool, err error) {
-	if len(c.iin) != 12 {
+func (c *IINValidator) IsValid(iin string) (isValid bool, err error) {
+	if len(iin) != 12 {
 		return false, ErrShortIIN
 	}
 
-	if !regexp.MustCompile("/[0-9]{12}/").MatchString(c.iin) {
+	if !regexp.MustCompile("/[0-9]{12}/").MatchString(iin) {
 		return false, ErrIncorrectFormat
 	}
 
-	arr, err := c.stringToIntArr(c.iin)
+	arr, err := c.stringToIntArr(iin)
 	if err != nil {
 		return false, ErrIncorrectFormat
 	}
@@ -47,10 +44,10 @@ func (c *IINValidator) IsValid() (isValid bool, err error) {
 	arrLastEl := arr[len(arr)-1]
 
 	if checksum == arrLastEl {
-		return true, ErrIncorrectFormat
+		return false, ErrIncorrectFormat
 	}
 
-	return false, ErrIncorrectFormat
+	return true, nil
 }
 
 func (c *IINValidator) stringToIntArr(str string) (arr []int, err error) {

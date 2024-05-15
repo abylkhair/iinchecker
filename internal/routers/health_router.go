@@ -1,22 +1,18 @@
 package routers
 
 import (
-	"encoding/json"
 	"github.com/gorilla/mux"
-	"net/http"
+	health_check_handler "github.com/wildegor/kaspi-rest/internal/handlers/health_check"
 )
 
 type HealthRouter struct {
+	hh *health_check_handler.HealthCheckHandler
 }
 
-func NewHealthRouter() *HealthRouter {
-	return &HealthRouter{}
+func NewHealthRouter(hh *health_check_handler.HealthCheckHandler) *HealthRouter {
+	return &HealthRouter{hh}
 }
 
-func (hr *HealthRouter) Setup(api *mux.Route) {
-	v1 := api.Subrouter().PathPrefix("/v1")
-	
-	v1.Path("/health/check").HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		json.NewEncoder(w).Encode(map[string]bool{"ok": true})
-	})
+func (hr *HealthRouter) Setup(r *mux.Router) {
+	r.Handle("/api/v1/health", hr.hh).Methods("GET")
 }

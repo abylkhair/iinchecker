@@ -6,10 +6,12 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/wildegor/kaspi-rest/internal/configs"
 	"github.com/wildegor/kaspi-rest/internal/db/postgres"
+	get_people_info_handler "github.com/wildegor/kaspi-rest/internal/handlers/add_people_info"
 	find_people_info_by_iin_handler "github.com/wildegor/kaspi-rest/internal/handlers/find_people_info_by_iin"
-	find_people_info_by_phone_handler "github.com/wildegor/kaspi-rest/internal/handlers/find_people_info_by_phone"
-	get_people_info_handler "github.com/wildegor/kaspi-rest/internal/handlers/get_people_info"
+	find_people_info_by_phone_handler "github.com/wildegor/kaspi-rest/internal/handlers/find_people_info_by_key"
+	health_check_handler "github.com/wildegor/kaspi-rest/internal/handlers/health_check"
 	iin_check_handler "github.com/wildegor/kaspi-rest/internal/handlers/iin_check"
+	users_repository "github.com/wildegor/kaspi-rest/internal/repositories/users"
 	"github.com/wildegor/kaspi-rest/internal/routers"
 	"log"
 	"log/slog"
@@ -56,21 +58,26 @@ func NewServer() (*Server, error) {
 	// Setup db
 	dbConn := postgres.NewPostgresConnection(pc)
 
+	// Setup repos
+	ur := users_repository.NewUsersRepository(dbConn)
+
 	// Setup handlers
 	ich := iin_check_handler.NewCheckIINHandler()
-	gph := get_people_info_handler.NewGetPeopleHandler()
-	fpph := find_people_info_by_phone_handler.NewFindPeopleInfoByPhoneHandler()
-	fpih := find_people_info_by_iin_handler.NewFindPeopleInfoByIINHandler()
+	gph := get_people_info_handler.NewAddPeopleHandler(ur)
+	fpph := find_people_info_by_phone_handler.NewFindPeopleInfoByKeyHandler(ur)
+	fpih := find_people_info_by_iin_handler.NewFindPeopleInfoByIINHandler(ur)
+	hh := health_check_handler.NewHealthCheckHandler()
 
 	// Setup routers
 	r := mux.NewRouter()
-	api := r.PathPrefix("/api")
-	hcr := routers.NewHealthRouter()
-	hcr.Setup(api)
+	hcr := routers.NewHealthRouter(hh)
+	hcr.Setup(r)
 	ccr := routers.NewCheckRouter(ich)
-	ccr.Setup(api)
+	ccr.Setup(r)
 	pr := routers.NewPeopleRouter(gph, fpih, fpph)
-	pr.Setup(api)
+	pr.Setup(r)
+	sr := routers.NewSwaggerRouter()
+	sr.Setup(r)
 
 	// Setup server
 	srv := &http.Server{

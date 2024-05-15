@@ -2,28 +2,24 @@ package routers
 
 import (
 	"github.com/gorilla/mux"
+	get_people_info_handler "github.com/wildegor/kaspi-rest/internal/handlers/add_people_info"
 	find_people_info_by_iin_handler "github.com/wildegor/kaspi-rest/internal/handlers/find_people_info_by_iin"
-	find_people_info_by_phone_handler "github.com/wildegor/kaspi-rest/internal/handlers/find_people_info_by_phone"
-	get_people_info_handler "github.com/wildegor/kaspi-rest/internal/handlers/get_people_info"
+	find_people_info_by_phone_handler "github.com/wildegor/kaspi-rest/internal/handlers/find_people_info_by_key"
 )
 
 type PeopleRouter struct {
-	pih  *get_people_info_handler.GetPeopleHandler
+	pih  *get_people_info_handler.AddPeopleHandler
 	fph  *find_people_info_by_iin_handler.FindPeopleInfoByIINHandler
-	fpph *find_people_info_by_phone_handler.FindPeopleInfoByPhoneHandler
+	fpph *find_people_info_by_phone_handler.FindPeopleInfoByKeyHandler
 }
 
-func NewPeopleRouter(pih *get_people_info_handler.GetPeopleHandler, fph *find_people_info_by_iin_handler.FindPeopleInfoByIINHandler, fpph *find_people_info_by_phone_handler.FindPeopleInfoByPhoneHandler) *PeopleRouter {
+func NewPeopleRouter(pih *get_people_info_handler.AddPeopleHandler, fph *find_people_info_by_iin_handler.FindPeopleInfoByIINHandler, fpph *find_people_info_by_phone_handler.FindPeopleInfoByKeyHandler) *PeopleRouter {
 	return &PeopleRouter{pih: pih, fph: fph, fpph: fpph}
 }
 
-func (pr *PeopleRouter) Setup(api *mux.Route) {
-
-	pc := api.PathPrefix("/people")
-	pci := pc.PathPrefix("/info")
-
-	pci.Handler(pr.pih)
-	pci.PathPrefix("/iin/{iin:[0-9]+}").Handler(pr.fph)
-	pci.PathPrefix("/iin/{iin:[0-9]+}").Handler(pr.fpph)
-	pci.PathPrefix("/phone/{key}").Handler(pr.fpph)
+func (pr *PeopleRouter) Setup(r *mux.Router) {
+	r.Handle("/api/v1/people/info", pr.pih).Methods("POST")
+	r.Handle("/iin/{iin:[0-9]+}", pr.fph).Methods("GET")
+	r.Handle("/iin/{iin:[0-9]+}", pr.fpph).Methods("GET")
+	r.Handle("/phone/{key}", pr.fpph).Methods("GET")
 }

@@ -27,13 +27,14 @@ func NewPostgresConfig(c *Configurator) *PostgresConfig {
 }
 
 func (p *PostgresConfig) URI() string {
-	return fmt.Sprintf("postgres://%s:%s@%s:%d/%s?sslmode=disable",
+	uri := fmt.Sprintf("postgres://%s:%s@%s:%d/%s?sslmode=disable",
 		p.User,
 		p.Password,
 		p.Host,
 		p.Port,
 		p.Name,
 	)
+	return uri
 }
 
 func (p *PostgresConfig) MigrationURI() string {
