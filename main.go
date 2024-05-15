@@ -92,7 +92,7 @@ func peopleInfoHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func personinfoByIINHandler(w http.ResponseWriter, r *http.Request) {
-	iin := r.URL.Path[len("people/info/iin"):]
+	iin := r.URL.Path[len("/people/info/iin/"):]
 	if !isValidIIN(iin) {
 		w.WriteHeader(http.StatusInternalServerError)
 		json.NewEncoder(w).Encode(ErrorResponse{
@@ -101,6 +101,28 @@ func personinfoByIINHandler(w http.ResponseWriter, r *http.Request) {
 		})
 		return
 	}
+
+	// Извлечение информации о человеке из базы данных по ИИН
+	var person Person
+	err := db.QueryRow("SELECT name, iin, phone FROM people WHERE iin = ?", iin).Scan(&person.Name, &person.IIN, &person.Phone)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			w.WriteHeader(http.StatusNotFound)
+			json.NewEncoder(w).Encode(ErrorResponse{
+				Success: false,
+				Errors:  "Person not found",
+			})
+			return
+		}
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(ErrorResponse{
+			Success: false,
+			Errors:  err.Error(),
+		})
+		return
+	}
+
+	json.NewEncoder(w).Encode(person)
 }
 
 func personInfoByNameHandler(w http.ResponseWriter, r *http.Request) {
