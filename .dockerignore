@@ -1,0 +1,7 @@
+dist
+vendor
+docker-compose.yml
+.air.toml
+.env
+.env.docker
+.env.example

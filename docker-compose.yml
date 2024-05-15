@@ -1,0 +1,41 @@
+version: '3'
+
+volumes:
+  postgres_data:
+
+networks:
+  app-network:
+    driver: bridge
+
+services:
+  db:
+    image: 'postgres:15'
+    env_file:
+      - .env
+    ports:
+      - ${POSTGRES_PORT}:5432
+    networks:
+      - app-network
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/
+      - ./scripts/db/init.sql:/docker-entrypoint-initdb.d/init.sql
+
+  app:
+    hostname: app-dev
+    restart: unless-stopped
+    build:
+      context: ./
+      dockerfile: Dockerfile
+      target: dev
+    env_file:
+      - .env.docker # separate configs
+    networks:
+      - app-network
+    volumes:
+      - ./:/app
+    ports:
+      - 8080:${APP_PORT}
+    extra_hosts:
+      - "host.docker.internal:host-gateway" # for some future
+    depends_on:
+      - db
